@@ -71,6 +71,10 @@ import System.FilePath.Posix (combine)
 import qualified UnliftIO as U
 import qualified UnliftIO.MVar as UM
 
+#if MIN_VERSION_crypton_connection(0,4,0)
+import Data.Default (def)
+#endif
+
 -- | max obj size is 5TiB
 maxObjectSize :: Int64
 maxObjectSize = 5 * 1024 * 1024 * oneMiB
@@ -1115,7 +1119,11 @@ connect :: ConnectInfo -> IO MinioConn
 connect ci = do
   let settings
         | connectIsSecure ci && connectDisableTLSCertValidation ci =
+#if MIN_VERSION_crypton_connection(0,4,0)
+            let badTlsSettings = Conn.TLSSettingsSimple True False False def
+#else
             let badTlsSettings = Conn.TLSSettingsSimple True False False
+#endif
              in TLS.mkManagerSettings badTlsSettings Nothing
         | connectIsSecure ci = NC.tlsManagerSettings
         | otherwise = defaultManagerSettings
